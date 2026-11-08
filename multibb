@@ -1,9 +1,14 @@
 #!/bin/bash
 #
-# bamboo-switch - Bambu Studio Profile Manager
+# multibb (Multi-Bam-Boo) - Bambu Studio profile manager: switch accounts, or run them side by side
 # 
 # Manages multiple Bambu Studio profiles by swapping symlinks,
 # allowing you to maintain separate logins without re-authenticating.
+# `multibb open <profile>` starts an extra Bambu Studio on a profile's folder
+# (via --datadir) so several accounts can run at the same time.
+#
+# Based on bamboo-switch by c0ryd (https://github.com/c0ryd/bamboo-switch), MIT.
+# Not affiliated with or endorsed by Bambu Lab.
 #
 
 set -e
@@ -12,6 +17,7 @@ SUPPORT_DIR="$HOME/Library/Application Support"
 BAMBU_LINK="$SUPPORT_DIR/BambuStudio"
 PROFILE_PREFIX="BambuStudio-"
 CONFIG_FILE="BambuStudio.conf"
+BAMBU_BUNDLE_ID="com.bambulab.bambu-studio"
 SYNC_RECENTS=true  # Set to false to disable recent files sync
 
 # Colors for output
@@ -51,25 +57,33 @@ quit_bambu() {
     print_info "Closing BambuStudio..."
     osascript -e 'tell application "BambuStudio" to quit' 2>/dev/null || true
     
-    # Wait for it to quit
-    for i in {1..10}; do
+    # Wait for it to quit. Bambu may be showing a "Save changes?" dialog, so
+    # give the user up to 60s to answer it. (Local change: the original
+    # force-killed after 5s, which could throw away an unsaved project.)
+    for i in {1..120}; do
         if ! is_bambu_running; then
+            sleep 0.5
             return 0
         fi
         sleep 0.5
     done
-    
-    # Force kill if still running
-    killall BambuStudio 2>/dev/null || true
-    sleep 0.5
-    
+
     ! is_bambu_running
+}
+
+# Called by init (the original script called this but never defined it,
+# so 'init' crashed with "command not found").
+check_not_running() {
+    if ! quit_bambu; then
+        print_error "Could not close BambuStudio. Please close it manually and run init again."
+        exit 1
+    fi
 }
 
 # Launch BambuStudio
 launch_bambu() {
     print_info "Launching BambuStudio..."
-    open "/Applications/BambuStudio.app"
+    open -b "$BAMBU_BUNDLE_ID"
 }
 
 # Sync recent files between profiles using Python (for JSON parsing)
@@ -143,7 +157,7 @@ cmd_list() {
     done
     
     if [ $found -eq 0 ]; then
-        print_warning "  No profiles found. Run 'bamboo-switch init' to get started."
+        print_warning "  No profiles found. Run 'multibb init' to get started."
     fi
 }
 
@@ -153,7 +167,7 @@ cmd_create() {
     
     if [ -z "$name" ]; then
         print_error "Profile name required."
-        echo "Usage: bamboo-switch create <profile-name>"
+        echo "Usage: multibb create <profile-name>"
         exit 1
     fi
     
@@ -171,9 +185,24 @@ cmd_create() {
     fi
     
     mkdir -p "$profile_dir"
+
+    # Local change: seed the new profile with the account-independent parts of
+    # the active profile (the ~300 MB network plugin and the stock printer
+    # presets) so Bambu Studio doesn't make you re-download them. Login,
+    # user presets, logs and caches are NOT copied.
+    if [ -L "$BAMBU_LINK" ]; then
+        local src
+        src=$(readlink "$BAMBU_LINK")
+        for sub in plugins system; do
+            if [ -d "$src/$sub" ]; then
+                cp -R "$src/$sub" "$profile_dir/$sub" 2>/dev/null || true
+            fi
+        done
+    fi
+
     print_success "Created profile '$name'"
     echo ""
-    echo "To use it, run: bamboo-switch $name"
+    echo "To use it, run: multibb $name"
 }
 
 # Delete a profile
@@ -182,7 +211,7 @@ cmd_delete() {
     
     if [ -z "$name" ]; then
         print_error "Profile name required."
-        echo "Usage: bamboo-switch delete <profile-name>"
+        echo "Usage: multibb delete <profile-name>"
         exit 1
     fi
     
@@ -217,7 +246,7 @@ cmd_switch() {
     
     if [ -z "$name" ]; then
         print_error "Profile name required."
-        echo "Usage: bamboo-switch <profile-name>"
+        echo "Usage: multibb <profile-name>"
         exit 1
     fi
     
@@ -233,7 +262,7 @@ cmd_switch() {
             fi
         done
         echo ""
-        echo "Create a new profile with: bamboo-switch create $name"
+        echo "Create a new profile with: multibb create $name"
         exit 1
     fi
     
@@ -265,7 +294,7 @@ cmd_switch() {
         rm -f "$BAMBU_LINK"
     elif [ -d "$BAMBU_LINK" ]; then
         print_error "BambuStudio directory exists but is not a symlink."
-        echo "Run 'bamboo-switch init' to migrate your existing config to a profile."
+        echo "Run 'multibb init' to migrate your existing config to a profile."
         exit 1
     fi
     
@@ -276,6 +305,25 @@ cmd_switch() {
     
     # Auto-launch BambuStudio
     launch_bambu
+}
+
+# Local addition: open a NEW Bambu Studio window/process on a profile's folder,
+# without touching the symlink or any other running Bambu Studio. Lets several
+# accounts run side by side (uses Bambu Studio's --datadir option).
+cmd_open() {
+    local name="$1"
+    if [ -z "$name" ]; then
+        print_error "Profile name required."
+        echo "Usage: multibb open <profile-name>"
+        exit 1
+    fi
+    local profile_dir="$SUPPORT_DIR/${PROFILE_PREFIX}${name}"
+    if [ ! -d "$profile_dir" ] || [ -L "$profile_dir" ]; then
+        print_error "Profile '$name' does not exist."
+        exit 1
+    fi
+    print_info "Opening a new BambuStudio window for '$name'..."
+    open -n -b "$BAMBU_BUNDLE_ID" --args --datadir "$profile_dir"
 }
 
 # Show current status
@@ -292,7 +340,7 @@ cmd_status() {
 cmd_init() {
     local name="${1:-default}"
     
-    echo "Bambu Switch Setup"
+    echo "Multi-Bam-Boo Setup"
     echo "=================="
     echo ""
     
@@ -331,17 +379,17 @@ cmd_init() {
     print_success "Setup complete!"
     echo ""
     echo "Quick start:"
-    echo "  bamboo-switch list           # Show all profiles"
-    echo "  bamboo-switch create work    # Create a new profile"
-    echo "  bamboo-switch work           # Switch to profile"
-    echo "  bamboo-switch status         # Show current profile"
+    echo "  multibb list           # Show all profiles"
+    echo "  multibb create work    # Create a new profile"
+    echo "  multibb work           # Switch to profile"
+    echo "  multibb status         # Show current profile"
 }
 
 # Show help
 cmd_help() {
-    echo "bamboo-switch - Bambu Studio Profile Manager"
+    echo "multibb (Multi-Bam-Boo) - Bambu Studio profile manager"
     echo ""
-    echo "Usage: bamboo-switch <command> [arguments]"
+    echo "Usage: multibb <command> [arguments]"
     echo ""
     echo "Commands:"
     echo "  <profile>           Switch to the specified profile"
@@ -349,14 +397,15 @@ cmd_help() {
     echo "  create <name>       Create a new profile"
     echo "  delete <name>       Delete a profile (with confirmation)"
     echo "  status              Show current active profile"
+    echo "  open <name>         Open an extra BambuStudio window on a profile (side by side)"
     echo "  init [name]         Initialize (migrate existing config to profile)"
     echo "  help                Show this help message"
     echo ""
     echo "Examples:"
-    echo "  bamboo-switch init           # First-time setup"
-    echo "  bamboo-switch create work    # Create a 'work' profile"
-    echo "  bamboo-switch work           # Switch to 'work' profile"
-    echo "  bamboo-switch home           # Switch back to 'home' profile"
+    echo "  multibb init           # First-time setup"
+    echo "  multibb create work    # Create a 'work' profile"
+    echo "  multibb work           # Switch to 'work' profile"
+    echo "  multibb home           # Switch back to 'home' profile"
     echo ""
     echo "Note: BambuStudio must be closed before switching profiles."
 }
@@ -374,6 +423,9 @@ case "${1:-}" in
         ;;
     status)
         cmd_status
+        ;;
+    open|window)
+        cmd_open "$2"
         ;;
     init|setup)
         cmd_init "$2"

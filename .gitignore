@@ -3,22 +3,6 @@
 *.swo
 *~
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-venv/
-.venv/
-env/
-.Python
-
-# py2app build artifacts
-app/build/
-app/dist/
-*.egg-info/
-
-# Generated icons
-app/AppIcon.iconset/
-app/icon_22.png
-app/icon_44.png
+# Build output
+build/
+dist/

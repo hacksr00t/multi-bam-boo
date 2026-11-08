@@ -1,120 +1,104 @@
-# bamboo-switch
+# Multi-Bam-Boo (MultiBB)
 
-A command-line profile manager for Bambu Studio on macOS.
+**Use several Bambu Studio accounts on one Mac, one at a time or all at once, from a free menu bar app.**
 
-> **Note:** This tool is not affiliated with Bambu Lab. It simply helps manage Bambu Studio profiles.
+> Not affiliated with or endorsed by Bambu Lab. "Bambu Studio" and "Bambu Lab" are trademarks of their owner.
 
-**Problem:** Bambu Lab doesn't support sharing devices between accounts or switching accounts easily. If you have printers on different accounts (e.g., home and work), you need to log out and back in with 2FA every time you switch.
+Bambu Studio only lets you sign in to one Bambu account, and switching means logging out, logging back in and doing 2FA every time. If your printers are split across accounts (home and work, personal and a team or club), that gets old fast.
 
-**Solution:** `bamboo-switch` manages multiple Bambu Studio configuration profiles via symlinks. Each profile maintains its own login session, so you only need to authenticate once per profile.
+Multi-Bam-Boo gives each account its own Bambu Studio profile that **stays signed in**, and puts a 🖨 icon in your menu bar to use them:
 
----
+- **Switch mode:** click an account and Bambu Studio closes, swaps and reopens on it, usually within a few seconds.
+- **Side-by-side mode:** open Bambu Studio windows for different accounts *at the same time*, as many per account as you like. You can watch every printer at once, and nothing needs saving and reloading.
 
-## Want a Menu Bar App?
+```
+🖨 personal · team
+ ├ Open a new Bambu Studio window
+ │   New personal window   (1 open)   ⌘1
+ │   New team window       (2 open)   ⌘2
+ ├ New Profile…
+ ├ ✓ Run Accounts Side by Side
+ ├ Show Profiles in Finder
+ ├ ✓ Launch at Login
+ └ How to Use… / About / Quit
+```
 
-Skip the terminal with **Bamboo Switch for Menu Bar** — click to switch profiles, auto-quit/launch BambuStudio, and more.
+It also includes a `multibb` command-line tool and `multibb://` links for Shortcuts, Raycast, Alfred or a Stream Deck.
 
-**[Get it on Gumroad →](https://corydawson8.gumroad.com/l/qmriaz)**
+## Install
 
----
+### Download (easiest)
 
-## Installation
+Get the latest `Multi-Bam-Boo-x.y.z.zip` from [Releases](../../releases), unzip it and drag **Multi-Bam-Boo** into Applications. The app is signed and notarized, and it includes the `multibb` command.
 
-### Homebrew (Recommended)
+### Build from source
+
+You need Xcode or its Command Line Tools (`xcode-select --install`).
 
 ```bash
-brew tap c0ryd/bamboo-switch
-brew install bamboo-switch
+git clone https://github.com/hacksr00t/multi-bam-boo.git
+cd multi-bam-boo
+./build.sh
 ```
 
-### Manual Installation
+This builds a universal (Apple Silicon + Intel) app, installs it to `/Applications/Multi-Bam-Boo.app`, and puts `multibb` in your Homebrew bin folder (or `~/.local/bin`).
+
+### Command-line tool only
 
 ```bash
-# Download
-curl -LO https://github.com/c0ryd/bamboo-switch/releases/latest/download/bamboo-switch
-
-# Install
-chmod +x bamboo-switch
-sudo mv bamboo-switch /usr/local/bin/
-
-# Or install to ~/bin (no sudo required)
-mkdir -p ~/bin && mv bamboo-switch ~/bin/
-export PATH="$HOME/bin:$PATH"  # Add to ~/.zshrc
+make install            # → /usr/local/bin/multibb  (PREFIX=... to change)
 ```
 
----
+## Getting started
 
-## Quick Start
+1. Open **Multi-Bam-Boo** and click the 🖨 icon → **Set Up Multi-Bam-Boo…**. Your current Bambu Studio login becomes the first profile.
+2. Click **New Profile…** to add the second account, then switch to it and sign in once.
+3. Optional: turn on **Run Accounts Side by Side** to keep both open at once.
 
-### First-Time Setup
+Full instructions, caveats and troubleshooting: **[HOW-TO-USE.md](HOW-TO-USE.md)** (also under **How to Use…** in the menu).
+
+## Command line
 
 ```bash
-bamboo-switch init
+multibb init personal   # first-time setup: current config → profile "personal"
+multibb create team     # add a profile
+multibb team            # switch (closes + reopens Bambu Studio)
+multibb open team       # open an extra window on "team", side by side
+multibb list | status | delete <name> | help
 ```
 
-This migrates your existing BambuStudio config to a profile called "default".
+## How it works
 
-### Create Profiles
+Bambu Studio keeps its settings and login in `~/Library/Application Support/BambuStudio`. Multi-Bam-Boo makes that a symlink to `BambuStudio-<profile>` folders and repoints it to switch accounts. For side-by-side mode it starts extra Bambu Studio copies with Bambu Studio's built-in `--datadir` option, aimed straight at a profile folder.
 
-```bash
-bamboo-switch create home
-bamboo-switch create work
-```
+Your data stays in normal folders. Nothing in Bambu Studio is modified, and Bambu Studio updates keep working.
 
-### Switch Profiles
+**Limitations**
 
-```bash
-bamboo-switch work    # Switch to work profile
-bamboo-switch home    # Switch back to home
-```
+- macOS 13+ only.
+- In side-by-side mode, only the first window finds printers on your local network directly. The others connect through Bambu's cloud, which works for cloud printing and monitoring.
+- Bambu's own **File → New Window** doesn't know about profiles, so open windows from the 🖨 menu.
 
-BambuStudio will automatically quit (if running) and relaunch with the selected profile.
+## Credits
 
----
+Multi-Bam-Boo started as a fork of **[bamboo-switch](https://github.com/c0ryd/bamboo-switch)** by [c0ryd](https://github.com/c0ryd) (MIT). The symlink profile approach and the original CLI are his. Profiles are compatible both ways.
 
-## CLI Usage
+Changes in Multi-Bam-Boo:
 
-```
-bamboo-switch <command> [arguments]
+- A free native menu bar app (Swift/AppKit).
+- Side-by-side mode (`multibb open`, using `--datadir`).
+- `init` no longer crashes on an existing config.
+- Switching never force-quits Bambu Studio, so unsaved projects aren't lost.
+- New profiles reuse the ~300 MB network plugin instead of downloading it again.
+- `multibb://` links.
+- Bambu Studio is found by bundle ID, so it doesn't have to be in `/Applications`.
 
-Commands:
-  <profile>           Switch to the specified profile
-  list                List all available profiles
-  create <name>       Create a new profile
-  delete <name>       Delete a profile (with confirmation)
-  status              Show current active profile
-  init [name]         Initialize (migrate existing config to profile)
-  help                Show help message
-```
+c0ryd also sells a polished menu bar app for bamboo-switch. If you prefer that one, [go support him](https://corydawson8.gumroad.com/l/qmriaz).
 
----
+## Building a release (maintainers)
 
-## How It Works
-
-Bambu Studio stores its configuration in:
-```
-~/Library/Application Support/BambuStudio/
-```
-
-`bamboo-switch` converts this directory into a symlink that points to profile-specific directories:
-```
-~/Library/Application Support/BambuStudio -> BambuStudio-home
-~/Library/Application Support/BambuStudio-home/
-~/Library/Application Support/BambuStudio-work/
-```
-
-When you switch profiles, the symlink is updated. Each profile maintains its own login credentials, printer settings, and preferences.
-
----
-
-## Limitations
-
-- **macOS only** — Uses macOS-specific paths
-- **Must quit BambuStudio** before switching (handled automatically by the CLI)
-- **Single instance** — Can't run multiple BambuStudio instances with different accounts simultaneously
-
----
+`./release.sh` signs with your Developer ID, notarizes with Apple and produces `dist/Multi-Bam-Boo-<version>.zip`. One-time setup steps are at the top of the script.
 
 ## License
 
-MIT
+[MIT](LICENSE)
