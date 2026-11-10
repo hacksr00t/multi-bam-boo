@@ -27,9 +27,9 @@ It also includes a `multibb` command-line tool and `multibb://` links for Shortc
 
 ## Install
 
-### Download (easiest)
+### Download
 
-Get the latest `Multi-Bam-Boo-x.y.z.zip` from [Releases](../../releases), unzip it and drag **Multi-Bam-Boo** into Applications. The app is signed and notarized, and it includes the `multibb` command.
+Signed, notarized downloads will appear under [Releases](../../releases). Until the first one is out, build from source (below). It takes about a minute.
 
 ### Build from source
 
