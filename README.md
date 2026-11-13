@@ -27,9 +27,19 @@ It also includes a `multibb` command-line tool and `multibb://` links for Shortc
 
 ## Install
 
-### Download
+### Download (easiest)
 
-Signed, notarized downloads will appear under [Releases](../../releases). Until the first one is out, build from source (below). It takes about a minute.
+1. Get **`Multi-Bam-Boo-x.y.z.zip`** from the [latest release](../../releases/latest). One download works on both **Apple Silicon (M1–M5)** and **Intel** Macs.
+2. Unzip it and drag **Multi-Bam-Boo** into **Applications**.
+3. Open it. A 🖨 icon appears in the menu bar.
+
+The app is signed with a Developer ID and notarized by Apple, so it opens without security warnings.
+
+To use the `multibb` command in Terminal, link it from inside the app:
+
+```bash
+sudo mkdir -p /usr/local/bin && sudo ln -sf "/Applications/Multi-Bam-Boo.app/Contents/Resources/multibb" /usr/local/bin/multibb
+```
 
 ### Build from source
 
