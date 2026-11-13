@@ -212,7 +212,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             menu.addItem(action(bambuApps().isEmpty ? "Open Bambu Studio" : "Bring Bambu Studio to Front",
                                 #selector(openBambu), "o"))
         }
-        menu.addItem(action("Show Profiles in Finder", #selector(showInFinder), ""))
+        if case .managed(let active) = state {
+            menu.addItem(manageProfilesItem(active: active))
+        } else {
+            menu.addItem(action("Show Profiles in Finder", #selector(showInFinder), ""))
+        }
         menu.addItem(.separator())
         let login = action("Launch at Login", #selector(toggleLogin), "")
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
@@ -220,6 +224,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(action("How to Use…", #selector(openHelp), ""))
         menu.addItem(action("About Multi-Bam-Boo", #selector(showAbout), ""))
         menu.addItem(action("Quit Multi-Bam-Boo", #selector(quitApp), "q"))
+    }
+
+    /// Manage Profiles ▸ <profile> ▸ Rename… / Delete…, plus Show in Finder.
+    func manageProfilesItem(active: String) -> NSMenuItem {
+        let top = NSMenuItem(title: "Manage Profiles", action: nil, keyEquivalent: "")
+        top.image = NSImage(systemSymbolName: "person.2", accessibilityDescription: nil)
+        let sub = NSMenu()
+        for name in listProfiles() {
+            let item = NSMenuItem(title: name == active ? "\(name)  (active)" : name, action: nil, keyEquivalent: "")
+            let m = NSMenu()
+            let r = action("Rename…", #selector(renameProfile(_:)), "")
+            r.representedObject = name
+            m.addItem(r)
+            let d = action("Delete…", #selector(deleteProfile(_:)), "")
+            d.representedObject = name
+            m.addItem(d)
+            item.submenu = m
+            sub.addItem(item)
+        }
+        sub.addItem(.separator())
+        sub.addItem(action("New Profile…", #selector(newProfile), ""))
+        sub.addItem(action("Show Profiles in Finder", #selector(showInFinder), ""))
+        top.submenu = sub
+        return top
     }
 
     func disabled(_ title: String) -> NSMenuItem {
@@ -327,6 +355,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self.switchTo(item)
             }
         }
+    }
+
+    @objc func renameProfile(_ sender: NSMenuItem) {
+        guard let old = sender.representedObject as? String else { return }
+        guard let new = askForName(title: "Rename profile “\(old)”",
+                                   info: "New name for this profile. Letters, numbers, - and _ only. The Bambu account signed in to it doesn't change.",
+                                   button: "Rename", initial: old), new != old else { return }
+        runCLI(["rename", old, new]) { status, out in
+            self.refreshTitle()
+            if status != 0 { self.alert("Couldn't rename “\(old)”", out) }
+        }
+    }
+
+    @objc func deleteProfile(_ sender: NSMenuItem) {
+        guard let name = sender.representedObject as? String else { return }
+        if case .managed(let active) = currentState(), active == name {
+            alert("Can't delete the active profile",
+                  "“\(name)” is the active profile. Switch to another profile first, then delete it.")
+            return
+        }
+        if (runningCounts()[name] ?? 0) > 0 {
+            alert("“\(name)” is open", "Close the Bambu Studio windows using “\(name)” first, then delete it.")
+            return
+        }
+        let a = NSAlert()
+        a.alertStyle = .warning
+        a.messageText = "Delete profile “\(name)”?"
+        a.informativeText = "Its Bambu Studio login, settings and presets on this Mac go to the Trash. Your Bambu account, cloud presets and printers aren't affected. To undo, put the folder back from the Trash before emptying it."
+        let del = a.addButton(withTitle: "Move to Trash")
+        del.hasDestructiveAction = true
+        a.addButton(withTitle: "Cancel")
+        NSApp.activate(ignoringOtherApps: true)
+        guard a.runModal() == .alertFirstButtonReturn else { return }
+        do {
+            try FileManager.default.trashItem(at: supportDir.appendingPathComponent(profilePrefix + name),
+                                              resultingItemURL: nil)
+        } catch {
+            alert("Couldn't delete “\(name)”", error.localizedDescription)
+        }
+        refreshTitle()
     }
 
     @objc func setUp() {
@@ -448,7 +516,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    func askForName(title: String, info: String, button: String) -> String? {
+    func askForName(title: String, info: String, button: String, initial: String = "") -> String? {
         let a = NSAlert()
         a.messageText = title
         a.informativeText = info
@@ -456,6 +524,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         a.addButton(withTitle: "Cancel")
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
         field.placeholderString = "work"
+        field.stringValue = initial
         a.accessoryView = field
         a.window.initialFirstResponder = field
         NSApp.activate(ignoringOtherApps: true)
@@ -484,9 +553,13 @@ if CommandLine.arguments.contains("--dump") {
     print("title: \(delegate.titleText())")
     let m = NSMenu()
     delegate.menuNeedsUpdate(m)
-    for i in m.items {
-        print(i.isSeparatorItem ? "  ----" : "  [\(i.state == .on ? "x" : " ")] \(i.title)" + (i.keyEquivalent.isEmpty ? "" : "  ⌘\(i.keyEquivalent)"))
+    func dump(_ menu: NSMenu, _ indent: String) {
+        for i in menu.items {
+            print(i.isSeparatorItem ? "\(indent)----" : "\(indent)[\(i.state == .on ? "x" : " ")] \(i.title)" + (i.keyEquivalent.isEmpty ? "" : "  ⌘\(i.keyEquivalent)") + (i.submenu != nil ? "  ▸" : ""))
+            if let s = i.submenu { dump(s, indent + "    ") }
+        }
     }
+    dump(m, "  ")
     exit(0)
 }
 

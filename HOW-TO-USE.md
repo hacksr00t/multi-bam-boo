@@ -64,6 +64,20 @@ Open a new Bambu Studio window
 
 ---
 
+## Managing profiles: rename and delete
+
+Click the icon → **Manage Profiles**, pick a profile, then:
+
+- **Rename…** gives the profile a new name, e.g. `team` → `makerspace`. Its login and settings stay as they are, since only the label changes.
+- **Delete…** moves the profile to the **Trash**: its Bambu Studio login, settings and presets on this Mac. Your Bambu account, cloud presets and printers aren't affected. If you change your mind, put the `BambuStudio-<name>` folder back from the Trash before emptying it.
+
+Some things are blocked to keep your data safe:
+
+- You can't rename or delete a profile while a Bambu Studio window is using it. Close those windows first.
+- You can't delete the **active** profile (the one with the ✓ in switch mode). Switch to another profile first. Renaming the active profile is fine once Bambu Studio is closed.
+
+---
+
 ## The rest of the menu
 
 | Item | What it does |
@@ -71,7 +85,7 @@ Open a new Bambu Studio window
 | **New Profile…** | Adds another account profile. |
 | **Run Accounts Side by Side** | Switches between switch mode and side-by-side mode. |
 | **Open Bambu Studio** | Switch mode only. Opens Bambu Studio on the current profile, or brings it to the front. |
-| **Show Profiles in Finder** | Shows the profile folders. Handy for backups. |
+| **Manage Profiles** | Rename or delete profiles, add a new one, or show the profile folders in Finder. |
 | **Launch at Login** | Starts Multi-Bam-Boo automatically when you log in. |
 | **How to Use…** | Opens this page. |
 | **About Multi-Bam-Boo** | Version and credits. |
@@ -87,7 +101,8 @@ multibb team           # switch to "team" (closes + reopens Bambu Studio)
 multibb open team      # open an EXTRA window on "team" (side by side, closes nothing)
 multibb status         # which profile is active
 multibb create work    # add a profile
-multibb delete work    # delete a profile (asks first, can't be undone)
+multibb rename work makerspace   # rename a profile
+multibb delete work    # delete a profile permanently (asks first; the menu's Delete… uses the Trash instead)
 multibb init [name]    # first-time setup
 ```
 

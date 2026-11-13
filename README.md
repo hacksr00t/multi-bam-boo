@@ -18,7 +18,8 @@ Multi-Bam-Boo gives each account its own Bambu Studio profile that **stays signe
  │   New team window       (2 open)   ⌘2
  ├ New Profile…
  ├ ✓ Run Accounts Side by Side
- ├ Show Profiles in Finder
+ ├ Manage Profiles ▸  personal ▸ Rename… / Delete…
+ │                    team     ▸ Rename… / Delete…
  ├ ✓ Launch at Login
  └ How to Use… / About / Quit
 ```
@@ -62,7 +63,7 @@ make install            # → /usr/local/bin/multibb  (PREFIX=... to change)
 ## Getting started
 
 1. Open **Multi-Bam-Boo** and click the 🖨 icon → **Set Up Multi-Bam-Boo…**. Your current Bambu Studio login becomes the first profile.
-2. Click **New Profile…** to add the second account, then switch to it and sign in once.
+2. Click **New Profile…** to add the second account, then switch to it and sign in once. Name profiles anything you like, and rename or delete them later under **Manage Profiles**.
 3. Optional: turn on **Run Accounts Side by Side** to keep both open at once.
 
 Full instructions, caveats and troubleshooting: **[HOW-TO-USE.md](HOW-TO-USE.md)** (also under **How to Use…** in the menu).
@@ -74,6 +75,7 @@ multibb init personal   # first-time setup: current config → profile "personal
 multibb create team     # add a profile
 multibb team            # switch (closes + reopens Bambu Studio)
 multibb open team       # open an extra window on "team", side by side
+multibb rename team club
 multibb list | status | delete <name> | help
 ```
 
@@ -97,6 +99,7 @@ Changes in Multi-Bam-Boo:
 
 - A free native menu bar app (Swift/AppKit).
 - Side-by-side mode (`multibb open`, using `--datadir`).
+- Manage Profiles: rename, and delete to the Trash (`multibb rename`), both blocked while a profile is in use.
 - `init` no longer crashes on an existing config.
 - Switching never force-quits Bambu Studio, so unsaved projects aren't lost.
 - New profiles reuse the ~300 MB network plugin instead of downloading it again.
