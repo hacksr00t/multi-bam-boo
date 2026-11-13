@@ -16,10 +16,10 @@ Multi-Bam-Boo gives each account its own Bambu Studio profile that **stays signe
  ├ Open a new Bambu Studio window
  │   New personal window   (1 open)   ⌘1
  │   New team window       (2 open)   ⌘2
- ├ New Profile…
  ├ ✓ Run Accounts Side by Side
  ├ Manage Profiles ▸  personal ▸ Rename… / Delete…
  │                    team     ▸ Rename… / Delete…
+ │                    New Profile…
  ├ ✓ Launch at Login
  └ How to Use… / About / Quit
 ```
@@ -63,7 +63,7 @@ make install            # → /usr/local/bin/multibb  (PREFIX=... to change)
 ## Getting started
 
 1. Open **Multi-Bam-Boo** and click the 🖨 icon → **Set Up Multi-Bam-Boo…**. Your current Bambu Studio login becomes the first profile.
-2. Click **New Profile…** to add the second account, then switch to it and sign in once. Name profiles anything you like, and rename or delete them later under **Manage Profiles**.
+2. Click **Add Another Account…** to add the second account, then switch to it and sign in once. Name profiles anything you like, and rename or delete them later under **Manage Profiles**.
 3. Optional: turn on **Run Accounts Side by Side** to keep both open at once.
 
 Full instructions, caveats and troubleshooting: **[HOW-TO-USE.md](HOW-TO-USE.md)** (also under **How to Use…** in the menu).

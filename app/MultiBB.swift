@@ -179,8 +179,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                      accessibilityDescription: nil)
                 menu.addItem(item)
             }
-            menu.addItem(.separator())
-            menu.addItem(action("New Profile…", #selector(newProfile), "n"))
+            addAnotherAccountIfNeeded(menu)
         case .managed(let active):
             menu.addItem(disabled("Bambu account profiles"))
             for (i, name) in listProfiles().enumerated() {
@@ -193,8 +192,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                      accessibilityDescription: nil)
                 menu.addItem(item)
             }
-            menu.addItem(.separator())
-            menu.addItem(action("New Profile…", #selector(newProfile), "n"))
+            addAnotherAccountIfNeeded(menu)
         case .unmanaged:
             menu.addItem(disabled("Not set up yet"))
             menu.addItem(action("Set Up Multi-Bam-Boo…", #selector(setUp), ""))
@@ -224,6 +222,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(action("How to Use…", #selector(openHelp), ""))
         menu.addItem(action("About Multi-Bam-Boo", #selector(showAbout), ""))
         menu.addItem(action("Quit Multi-Bam-Boo", #selector(quitApp), "q"))
+    }
+
+    /// Right after setup there's only one profile, and adding a second is the obvious
+    /// next step, so offer it in the main menu. Otherwise it lives under Manage Profiles.
+    func addAnotherAccountIfNeeded(_ menu: NSMenu) {
+        guard listProfiles().count == 1 else { return }
+        menu.addItem(.separator())
+        let add = action("Add Another Account…", #selector(newProfile), "")
+        add.image = NSImage(systemSymbolName: "person.crop.circle.badge.plus", accessibilityDescription: nil)
+        menu.addItem(add)
     }
 
     /// Manage Profiles ▸ <profile> ▸ Rename… / Delete…, plus Show in Finder.

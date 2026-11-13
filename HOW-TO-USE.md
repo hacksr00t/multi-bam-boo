@@ -15,7 +15,7 @@ The examples below use two profiles called **personal** and **team**. Yours can 
 
 1. Open **Multi-Bam-Boo** from Applications. A 🖨 icon appears in the menu bar showing `setup`.
 2. Click it → **Set Up Multi-Bam-Boo…** and name the account you're signed in to now (e.g. `personal`). Bambu Studio closes, your current login and settings become that profile, and Bambu Studio reopens.
-3. Click the icon → **New Profile…** and name the second account (e.g. `team`). Multi-Bam-Boo copies Bambu's network plugin and stock printer presets into it, so nothing big is downloaded again.
+3. Click the icon → **Add Another Account…** and name the second account (e.g. `team`). Multi-Bam-Boo copies Bambu's network plugin and stock printer presets into it, so nothing big is downloaded again.
 4. Switch to the new profile (or open a window for it in side-by-side mode). Bambu Studio starts like a fresh install:
    - Go through the **Setup Wizard**.
    - Click **Login/Register** and sign in to the second account.
@@ -82,7 +82,7 @@ Some things are blocked to keep your data safe:
 
 | Item | What it does |
 |---|---|
-| **New Profile…** | Adds another account profile. |
+| **Add Another Account…** | Only shown while you have a single profile. Adds the second one. After that, use **Manage Profiles → New Profile…** |
 | **Run Accounts Side by Side** | Switches between switch mode and side-by-side mode. |
 | **Open Bambu Studio** | Switch mode only. Opens Bambu Studio on the current profile, or brings it to the front. |
 | **Manage Profiles** | Rename or delete profiles, add a new one, or show the profile folders in Finder. |
